@@ -1,0 +1,99 @@
+# Adonis + GraphQL + SolidJS
+
+A demo experiment exploring three technologies that share a similar design philosophy. Not a production starter kit.
+
+---
+
+## Stack
+
+### AdonisJS
+
+Node.js framework modelled closely after Laravel. The architecture is prescribed: Controllers handle HTTP, Models handle persistence via the Lucid ORM (Active Record), Services hold business logic, Middleware handles cross-cutting concerns. The folder structure and layer responsibilities are part of the framework, not decisions left to each project.
+
+It is TypeScript-native by design, which makes type safety across the whole backend straightforward rather than bolted on.
+
+Packages in use:
+
+- `@adonisjs/lucid` — Active Record ORM (similar to Eloquent)
+- `@adonisjs/auth` — session-based authentication
+- `@adonisjs/inertia` — Inertia.js adapter (server-driven routing, no separate API deployment)
+- `@vinejs/vine` — request validation
+- `@tuyau/core` — generates a typed client from Adonis routes
+
+---
+
+### GraphQL
+
+The schema in `app/graphql/schema.ts` is the single definition of what the API exposes. Every query and mutation is explicit, typed, and visible in one place.
+
+Reasons for GraphQL over REST in this setup:
+
+- Clients request exactly the fields they need. No over-fetching, no chained requests to assemble a view.
+- N+1 query problems become visible at the resolver level during code review, rather than silently in production under load. The structure pushes you toward preloading relationships explicitly.
+- The SDL schema doubles as documentation. There is no separate contract to maintain.
+- Combined with typed operations on the frontend (`inertia/graphql/operations.ts`), TypeScript knows the exact shape of every response without manual type definitions.
+
+Backend: [graphql-yoga](https://the-guild.dev/graphql/yoga-server). Frontend: [@urql/solid](https://urql.dev).
+
+See [GRAPHQL.md](./GRAPHQL.md) for how to add queries, mutations, auth guards, and error handling.
+
+---
+
+### SolidJS
+
+SolidJS compiles JSX to direct DOM operations. Components execute once; reactivity is tracked at the signal level, so only the DOM nodes that depend on a changed value update (fine-grained reactivity). There is no virtual DOM reconciliation at runtime.
+
+Reasons for SolidJS over React or Vue:
+
+- No manual memoisation. `useMemo`/`useCallback` exist in React to work around re-render behaviour that SolidJS does not have.
+- One-way data flow is the natural result of how props and signals work, not a convention to remember.
+- TSX with full TypeScript inference. Vue's template compiler has its own type layer that lags behind standard TS tooling. SolidJS uses TSX directly — same IDE support, same inference, no exceptions.
+- The core API is small: `createSignal`, `createEffect`, `createMemo`, `createResource`. Most things follow from those four.
+
+Delivered via [Inertia.js](https://inertiajs.com/), which handles page routing and server-provided props without a separate frontend deployment.
+
+---
+
+## Why these three
+
+All three technologies lean toward making things explicit: where code lives (Adonis), what data is available and in what shape (GraphQL), and how state flows through the UI (SolidJS). That tends to reduce the surface area for ambiguous decisions, which matters more when working with mixed-experience teams than when working solo.
+
+This is a demo. The goal was to see how they fit together, not to build a reusable boilerplate.
+
+---
+
+## Structure
+
+```
+app/
+  controllers/       ← HTTP adapters (REST routes + GraphQL endpoint)
+  graphql/
+    schema.ts        ← SDL type definitions
+    resolvers/       ← thin adapters that call services
+    errors.ts        ← global GraphQL error formatter
+  models/            ← Lucid ORM models
+  services/          ← business logic
+  middleware/
+  validators/        ← VineJS schemas
+
+inertia/             ← SolidJS frontend
+  graphql/
+    client.ts        ← URQL client setup
+    operations.ts    ← typed queries and mutations
+  pages/
+
+database/
+  migrations/
+```
+
+---
+
+## Getting started
+
+```bash
+pnpm install
+node ace migration:run
+node ace serve --hmr
+```
+
+GraphiQL is available at `http://localhost:3333/graphql` in development.
