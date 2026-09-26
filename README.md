@@ -12,7 +12,6 @@ _A demo experiment exploring three technologies that share a similar design phil
 ## Why does this exist?
 1. All three technologies lean toward making things explicit: where code lives (Adonis), what data is available and in what shape (GraphQL), and how state flows through the UI (SolidJS).
 2. That tends to reduce the surface area for ambiguous decisions, which matters more when working with mixed-experience teams than when working solo.
-3. This is a demo. The goal was to see how they fit together, not to build a reusable boilerplate.
 
 ## AdonisJS
 
